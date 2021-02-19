@@ -26,5 +26,5 @@ jobs:
     - name: Publish Nuget package
       uses: gjkaal/publish-nuget@v2.5.2
       with:
-        PROJECT_FILE_PATH: n2e.markdown/n2e.markdown.csproj
+        PROJECT_FILE_PATH: N2e.MarkDown/N2e.MarkDown.csproj
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
