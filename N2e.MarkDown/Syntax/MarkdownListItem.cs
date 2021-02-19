@@ -9,16 +9,18 @@ namespace N2e.MarkDown.Syntax
     {
         public override char TriggerValue => '\0';
         public override MdType TypeName => MdType.ListItem;
-        public override Func<string, IMarkdownContent, int, bool> Trigger => ((s, p, i) =>
+        public override Func<string, IMarkdownContent, int, bool> Trigger => (s, _, i) =>
         {
             if (i >= s.Length - 2) return false;
             var c = s[i];
             var space = s[i + 1];
             return ((c == '-' || c == '*' || c == '+') && space == ' ');
-        });
+        };
 
         public override IMarkdownContent ElementComplete(ref string value, ref int i)
         {
+            if (i >= value.Length) return null;
+
             // search depth
             var space = i - 1;
             int depth = 0;
@@ -28,7 +30,7 @@ namespace N2e.MarkDown.Syntax
                 space -= 1;
             }
             // skip hypen and start with space
-            i += 1;
+            i += 1;            
             var result = base.ElementComplete(ref value, ref i);
             result.UpdateDepth(depth);
             return result;

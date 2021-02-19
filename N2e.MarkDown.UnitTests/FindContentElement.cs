@@ -6,36 +6,36 @@ using N2e.MarkDown;
 namespace C2sc.MarkDown
 {
     [TestClass]
-    public class FindContentElement
+    public class MarkDownReaderTests
     {
         [DataTestMethod]
-        //[DataRow("Any simple text.", 0, MdType.Document, "Any simple text.")]
-        //[DataRow("Any simple text.\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\rStarting on a new line.")]
-        //[DataRow("Any simple text.## Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.## Header2\n\rStarting on a new line.")]
-        //[DataRow("Any simple text.\n\r## Valid Header2\n\rStarting on a new line.", 1, MdType.Header, "Any simple text.\n\r{0}\n\rStarting on a new line.")]
-        //[DataRow("Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.")]
-        //[DataRow("## Valid Header2", 1, MdType.Header, "{0}")]
-        //[DataRow("List items\n\r- First\n\r- Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        //[DataRow("List items\n\r* First\n\r* Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        //[DataRow("List items\n\r+ First\n\r+ Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        //[DataRow("List items\n\r  - First\n\r  - Second", 2, MdType.ListItem, "List items\n\r  {0}\n\r  {1}")]
-        //[DataRow("Numbered items\n\r  1. First\n\r  2. Second", 2, MdType.NumberedItem, "Numbered items\n\r  {0}\n\r  {1}")]
-        //[DataRow("[ ] Checkbox",1, MdType.CheckBox, "{0} Checkbox")]
-        //[DataRow("[x]  Checkbox",1, MdType.CheckBox, "{0}  Checkbox")]
-        //[DataRow("[v] Checkbox",1, MdType.CheckBox, "{0} Checkbox")]
-        //[DataRow("```\n\rCode block\n\r```\n\r",1, "Code", "{0}\n\r")]
-        //[DataRow("```C#\n\rCode block\n\r```\n\r",1, "Code", "{0}\n\r")]
+        [DataRow("Any simple text.", 0, MdType.Document, "Any simple text.")]
+        [DataRow("Any simple text.\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\rStarting on a new line.")]
+        [DataRow("Any simple text.## Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.## Header2\n\rStarting on a new line.")]
+        [DataRow("Any simple text.\n\r## Valid Header2\n\rStarting on a new line.", 1, MdType.Header, "Any simple text.\n\r{0}\n\rStarting on a new line.")]
+        [DataRow("Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.")]
+        [DataRow("## Valid Header2", 1, MdType.Header, "{0}")]
+        [DataRow("List items\n\r- First\n\r- Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
+        [DataRow("List items\n\r* First\n\r* Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
+        [DataRow("List items\n\r+ First\n\r+ Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
+        [DataRow("List items\n\r  - First\n\r  - Second", 2, MdType.ListItem, "List items\n\r  {0}\n\r  {1}")]
+        [DataRow("Numbered items\n\r  1. First\n\r  2. Second", 2, MdType.NumberedItem, "Numbered items\n\r  {0}\n\r  {1}")]
+        [DataRow("[ ] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
+        [DataRow("[x]  Checkbox", 1, MdType.CheckBox, "{0}  Checkbox")]
+        [DataRow("[v] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
+        [DataRow("```\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
+        [DataRow("````\n\rCode block\n\r````\n\r", 1, MdType.Code, "{0}\n\r")]
+        [DataRow("```C#\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
         // > Quote end with double crlf
         // (text)[httplink] hyperlink
         // [anchor] some text
         // ~~~~ \n\rFixed text on newline ends with \n\r~~~~\n\r
-        //[DataRow("Some text _emphasis_ with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
-        //[DataRow("Some text *emphasis* with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
-        //[DataRow("Some text __emphasis__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
-        //[DataRow("Some text __emphasis with nested *emphasis*__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
-        //[DataRow("Some text ~~strikethrough~~ with strikethrough", 1, MdType.Strikethrough, "Some text {0} with strikethrough")]
+        [DataRow("Some text _emphasis_ with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
+        [DataRow("Some text *emphasis* with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
+        [DataRow("Some text __emphasis__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
+        [DataRow("Some text __emphasis with nested *emphasis*__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
+        [DataRow("Some text ~~strikethrough~~ with strikethrough", 1, MdType.Strikethrough, "Some text {0} with strikethrough")]
         [DataRow("Some text `Inline code block` with inline code ignores other elements??", 1, MdType.InlineCode, "Some text {0} with inline code ignores other elements??")]
-        // `inline code`
         // --- *** ___ Horizontal line
         public void ParseDocument(string value, int expectedElementCount, MdType expectType, string expectedContent)
         {

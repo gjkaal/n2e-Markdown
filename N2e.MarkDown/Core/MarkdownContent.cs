@@ -13,6 +13,7 @@ namespace N2e.MarkDown.Core
         public int Depth { get; internal set; }
         public bool Selected { get; internal set; }
         public bool StopRecursion { get; internal set; }
+        public string Tag { get; internal set; }
 
         public void UpdateContent(string value)
         {

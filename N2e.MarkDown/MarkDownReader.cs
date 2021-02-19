@@ -9,6 +9,7 @@ namespace N2e.MarkDown
     public class MarkDownReader
     {
         private readonly List<IMarkDownModel> models = new List<IMarkDownModel>();
+
         public MarkDownReader()
         {
             models.Add(new MarkdownHeader());
@@ -19,6 +20,10 @@ namespace N2e.MarkDown
             models.Add(new MarkdownCheckBox());
             models.Add(new MarkdownEmphasis());
             models.Add(new MarkdownStrikeThrough());
+
+            // code and inline code use the same tage, so order for model
+            // will infuence the evaluation
+            models.Add(new MarkdownCode());
             models.Add(new MarkdownInlineCode());
         }
 
@@ -75,7 +80,7 @@ namespace N2e.MarkDown
             }
             // add completion
             sb.Append(content.Substring(start));
-            value.UpdateContent( sb.ToString());
+            value.UpdateContent(sb.ToString());
 
             // parse inner elements
             foreach (var item in value.SubElements)

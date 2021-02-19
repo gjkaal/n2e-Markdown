@@ -8,7 +8,7 @@ namespace N2e.MarkDown.Syntax
     public class MarkdownNumberedList : MarkDownModel
     {
         public override char TriggerValue => '\0';
-        public override Func<string, IMarkdownContent, int, bool> Trigger => ((s, p, i) => {
+        public override Func<string, IMarkdownContent, int, bool> Trigger => (s, _, i) => {
             if (i >= s.Length - 1) return false;
             var c = s[i];
             if ("0123456789".IndexOf(c) <= 0) return false;
@@ -17,13 +17,13 @@ namespace N2e.MarkDown.Syntax
             if (dot > 0 && s[dot + 1] == ' ')
             {
                 var number = s.Substring(i, dot - i);
-                return int.TryParse(number, out _);
+                return int.TryParse(number, out int _);
             }
             else
             {
                 return false;
             }
-        });
+        };
         public override MdType TypeName => MdType.NumberedItem;
 
         public override IMarkdownContent ElementComplete(ref string value, ref int i)

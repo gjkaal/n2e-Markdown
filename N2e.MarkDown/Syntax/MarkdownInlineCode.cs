@@ -10,8 +10,11 @@ namespace N2e.MarkDown.Syntax
 
         public override IMarkdownContent ElementComplete(ref string value, ref int i)
         {
+            if (i >= value.Length) return null;
+
             var blockEnd = value.IndexOf('`', i + 1);
             if (blockEnd < 0) return null;
+            if (blockEnd == i + 1) return null;            
             var result = new MarkdownContent
             {
                 Type = TypeName,

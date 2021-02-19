@@ -9,7 +9,7 @@ namespace N2e.MarkDown.Syntax
     {
         public override char TriggerValue => '\0';
         public override MdType TypeName => MdType.TableCell;
-        public override Func<string, IMarkdownContent, int, bool> Trigger => ((s, p, i) => {
+        public override Func<string, IMarkdownContent, int, bool> Trigger => (s, p, _) => {
             // should be a single line, starting with a space, 
             // as subelement from a table
             if (p == null) return false;
@@ -17,7 +17,7 @@ namespace N2e.MarkDown.Syntax
             if (s.IndexOfAny(new[] { '\r', '\n' }) >= 0) return false;
             if (s[0] != ' ') return false;
             return true;
-        });
+        };
 
         public override IMarkdownContent ElementComplete(ref string value, ref int i)
         {

@@ -15,6 +15,7 @@
         Emphasis = 10,
         Bold = 11,
         Strikethrough,
-        InlineCode
+        InlineCode,
+        Code
     }
 }

@@ -12,6 +12,8 @@ namespace N2e.MarkDown.Syntax
 
         public override IMarkdownContent ElementComplete(ref string value, ref int i)
         {
+            if (i >= value.Length) return null;
+
             var iStart = i;
             var emphasisCharacter = value[iStart];
             var countTrigger = 0;
@@ -20,7 +22,7 @@ namespace N2e.MarkDown.Syntax
                 iStart++;
                 countTrigger++;
             }
-
+            if (value[iStart] == ' ') return null;
             var blockEnd = value.IndexOf(emphasisCharacter, iStart);
             if (blockEnd < 0) return null;
 

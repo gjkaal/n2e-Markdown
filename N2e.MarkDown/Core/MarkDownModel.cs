@@ -10,7 +10,7 @@ namespace N2e.MarkDown.Core
         public abstract char TriggerValue { get; }
         public virtual char TriggerValueAlt => '\0';
         public abstract MdType TypeName { get; }
-        public virtual Func<string, IMarkdownContent, int, bool> Trigger => null;
+        public virtual Func<string, IMarkdownContent, int, bool> Trigger => null;        
 
         public virtual IMarkdownContent ElementComplete(ref string value, ref int i)
         {
