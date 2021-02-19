@@ -17,7 +17,7 @@ namespace N2e.MarkDown.Syntax
             var eol = value.IndexOfAny(new[] { '\n', '\r' }, i);
             if (eol < 0) return null;
             var line = value.Substring(i, eol - i).Trim();
-            if (line.EndsWith('|'))
+            if (line.EndsWith("|"))
             {
                 line = line.Substring(0, line.Length - 1);
             }
