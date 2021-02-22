@@ -19,12 +19,17 @@ namespace N2e.MarkDown
             models.Add(new MarkdownTableCell());
             models.Add(new MarkdownCheckBox());
             models.Add(new MarkdownEmphasis());
+            models.Add(new MarkdownAnchor());
+            models.Add(new MarkdownLabel());
+            models.Add(new MarkdownBlockQuote());
             models.Add(new MarkdownStrikeThrough());
+            models.Add(new MarkdownHorizontalRule());
 
             // code and inline code use the same tage, so order for model
             // will infuence the evaluation
             models.Add(new MarkdownCode());
             models.Add(new MarkdownInlineCode());
+            models.Add(new MarkdownPreformatted());
         }
 
         public IMarkdownContent Parse(string value)
@@ -55,6 +60,7 @@ namespace N2e.MarkDown
             var content = value.Content;
             while (i < content.Length)
             {
+                restart:
                 var c = content[i];
                 foreach (var model in models)
                 {
@@ -71,12 +77,15 @@ namespace N2e.MarkDown
                             n++;
                             start = i;
                             if (i < content.Length) c = content[i];
+                            goto next;
                         }
                     }
                 }
 
                 newLine = (c == '\n' || c == '\r' || (newLine && (c == ' ' || c == '\t')));
                 i++;
+            next:
+                ;
             }
             // add completion
             sb.Append(content.Substring(start));

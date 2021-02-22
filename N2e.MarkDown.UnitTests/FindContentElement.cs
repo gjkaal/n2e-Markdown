@@ -23,20 +23,27 @@ namespace C2sc.MarkDown
         [DataRow("[ ] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
         [DataRow("[x]  Checkbox", 1, MdType.CheckBox, "{0}  Checkbox")]
         [DataRow("[v] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
+        [DataRow("> BlockQuote", 1, MdType.BlockQuote, "{0}")]
+        [DataRow("> BlockQuote\n\rNext line", 1, MdType.BlockQuote, "{0}\n\rNext line")]
+        [DataRow(" > BlockQuote\n\rNext line", 1, MdType.BlockQuote, " {0}\n\rNext line")]
+        [DataRow("---", 1, MdType.HorizontalRule, "{0}")]
+        [DataRow("___\n\rNext line", 1, MdType.HorizontalRule, "{0}\n\rNext line")]
+        [DataRow(" ***\n\rNext line", 1, MdType.HorizontalRule, " {0}\n\rNext line")]
+        [DataRow("Some text\n\r---\n\rNext line", 1, MdType.HorizontalRule, "Some text\n\r{0}\n\rNext line")]
         [DataRow("```\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
         [DataRow("````\n\rCode block\n\r````\n\r", 1, MdType.Code, "{0}\n\r")]
         [DataRow("```C#\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
-        // > Quote end with double crlf
-        // (text)[httplink] hyperlink
-        // [anchor] some text
-        // ~~~~ \n\rFixed text on newline ends with \n\r~~~~\n\r
+        [DataRow("~~~~\n\rPreformatted \n\rcode\n\r block\n\r~~~~\n\r", 1, MdType.Code, "{0}\n\r")]
+        [DataRow("Some text (Nice2experience) with label", 1, MdType.Label, "Some text {0} with label")]
+        [DataRow("Some text (Nice2experience)[http://www/nice2experience.com] with label and anchor", 2, MdType.Label, "Some text {0}{1} with label and anchor")]
+        [DataRow("Some text [http://www/nice2experience.com] with anchor", 1, MdType.Anchor, "Some text {0} with anchor")]
         [DataRow("Some text _emphasis_ with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
         [DataRow("Some text *emphasis* with emphasis", 1, MdType.Emphasis, "Some text {0} with emphasis")]
         [DataRow("Some text __emphasis__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
         [DataRow("Some text __emphasis with nested *emphasis*__ with emphasis", 1, MdType.Bold, "Some text {0} with emphasis")]
         [DataRow("Some text ~~strikethrough~~ with strikethrough", 1, MdType.Strikethrough, "Some text {0} with strikethrough")]
+        [DataRow("~~strikethrough~~ with strikethrough", 1, MdType.Strikethrough, "{0} with strikethrough")]
         [DataRow("Some text `Inline code block` with inline code ignores other elements??", 1, MdType.InlineCode, "Some text {0} with inline code ignores other elements??")]
-        // --- *** ___ Horizontal line
         public void ParseDocument(string value, int expectedElementCount, MdType expectType, string expectedContent)
         {
             var md = new MarkDownReader();
@@ -58,7 +65,9 @@ namespace C2sc.MarkDown
         [DataTestMethod]
         [DataRow("Some text `Inline code block` with inline code ignores other elements??")]
         [DataRow("Some text `Inline _code_ block` with inline code ignores other elements??")]
-        public void ParseCodeElements(string value)
+        [DataRow("```C#\n\rCode _ignore inner code_ block\n\r```\n\r")]
+        [DataRow("~~~~\n\rPreformatted \n\r# Header\n\r code block\n\r~~~~\n\r")]
+        public void ParseElementsThatIgnoreInnerMarkdown(string value)
         {
             var md = new MarkDownReader();
             IMarkdownContent contentBlocks = md.Parse(value);

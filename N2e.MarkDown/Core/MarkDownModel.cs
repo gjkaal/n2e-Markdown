@@ -5,6 +5,7 @@ namespace N2e.MarkDown.Core
 {
     public abstract class MarkDownModel : IMarkDownModel
     {
+        public virtual bool StopRecursion => false;
         public virtual bool InlineElement => false;
         public virtual bool SpaceRequired => true;
         public abstract char TriggerValue { get; }
@@ -14,7 +15,7 @@ namespace N2e.MarkDown.Core
 
         public virtual IMarkdownContent ElementComplete(ref string value, ref int i)
         {
-            // End markdown tag with eof or cr/lf
+            // End markdown tag with eof or cr/lf cr/lf
             var iStart = i;
             var found = false;
             var space = false;
