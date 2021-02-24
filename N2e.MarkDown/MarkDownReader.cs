@@ -2,6 +2,7 @@
 using N2e.MarkDown.Core;
 using N2e.MarkDown.Syntax;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace N2e.MarkDown
@@ -47,6 +48,100 @@ namespace N2e.MarkDown
             return result;
         }
 
+        public void WriteHtmlContent(TextWriter stream, IMarkdownContent content)
+        {
+            if (stream == null || content == null) return;
+
+            WriteHtml(stream, content.Type, content.Content, content.SubElements);
+        }
+
+        private void WriteHtml(TextWriter stream, MdType contentType, string content, IList<IMarkdownContent> subItems)
+        {
+            if (content.Length == 0) return;
+            var i = 0;
+            var nCount = 0;
+
+            stream.RenderHtmlPrefix(contentType);
+
+            while (i < content.Length)
+            {
+                var c = content[i];
+                // ignore linefeed characters
+                if (c == '\r') { i++;  continue; }
+                if (c == '{' )
+                {
+                    if (ValidatePlaceholder(stream, content, ref i))
+                    {
+                        i++;
+                        var p = content.IndexOf('}', i);
+                        if (int.TryParse(content.Substring(i, p - i), out int index))
+                        {
+                            if (index < subItems.Count)
+                            {
+                                var subItem = subItems[index];
+                                WriteHtml(stream, subItem.Type, subItem.Content, subItem.SubElements);
+                            }
+                        }
+                        i = p + 1;
+                    }
+                }
+                else
+                {
+                    // double line feed renders to <br />
+                    if (c == '\n')
+                    {
+                        nCount++;
+                        if (nCount==2)
+                        {
+                            stream.Write("<br />\n");
+                            nCount = 0;
+                        }
+                        else
+                        {
+                            stream.Write('\n');
+                        }
+                    }                   
+                    else
+                    {
+                        stream.Write(c);
+                        nCount = 0;
+                    }
+                }
+                i++;
+            }
+
+            stream.RenderHtmlPostFix(contentType);
+        }
+
+        private static bool ValidatePlaceholder(TextWriter stream, string content, ref int i)
+        {
+            // edge case detection
+            if (i + 1 >= content.Length)
+            {
+                stream.Write('{');
+                return false;
+            }
+
+            // find placeholder for subcontent
+            if (content[i + 1] == '{')
+            {
+                // ignore placeholder
+                i += 2;
+                var n = 2;
+                stream.Write("{{");
+                while (n > 0 && i < content.Length)
+                {
+                    var c = content[i];
+                    if (c == '}') n--;
+                    stream.Write(c);
+                    i++;
+                }
+                i--;
+                return false;
+            }
+            return true;
+        }
+
         private void ParseResult(IMarkdownContent value)
         {
             if (value.StopRecursion) return;
@@ -60,7 +155,6 @@ namespace N2e.MarkDown
             var content = value.Content;
             while (i < content.Length)
             {
-                restart:
                 var c = content[i];
                 foreach (var model in models)
                 {
@@ -81,7 +175,6 @@ namespace N2e.MarkDown
                         }
                     }
                 }
-
                 newLine = (c == '\n' || c == '\r' || (newLine && (c == ' ' || c == '\t')));
                 i++;
             next:

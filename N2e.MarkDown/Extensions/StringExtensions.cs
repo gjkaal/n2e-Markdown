@@ -1,6 +1,36 @@
 ﻿
+using N2e.MarkDown.Abstractions;
+using System.IO;
+
 namespace N2e.MarkDown.Extensions
 {
+    public static class HtmlHelperExtensions
+    {
+        public static TextWriter RenderHtmlPrefix(this TextWriter stream, MdType type)
+        {
+            switch (type)
+            {
+                case MdType.Header:
+                    stream.Write("<h1>");
+                    break;
+            }
+
+            return stream;
+        }
+
+        public static TextWriter RenderHtmlPostfix(this TextWriter stream, MdType type)
+        {
+            switch (type)
+            {
+                case MdType.Header:
+                    stream.Write("</h1>");
+                    break;
+            }
+
+            return stream;
+        }
+    }
+
     public static class StringExtensions
     {
         public static string GetLine(this string value, int startPos, int endPos)

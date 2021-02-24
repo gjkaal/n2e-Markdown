@@ -2,38 +2,69 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using N2e.MarkDown.Abstractions;
 using N2e.MarkDown;
+using System.IO;
 
 namespace C2sc.MarkDown
 {
+    [TestClass]
+    public class HtmlWriterTests
+    {
+        [DataTestMethod]
+        [DataRow("Any simple text.", "Any simple text.")]
+        [DataRow("Any simple text with {{0}} ignored placeholder.", "Any simple text with {{0}} ignored placeholder.")]
+        [DataRow("Any simple text with edge case {", "Any simple text with edge case {")]
+        [DataRow("} Any simple text with edge case.", "} Any simple text with edge case.")]
+        [DataRow("Any simple text.\r\nStarting on a new line.", "Any simple text.\nStarting on a new line.")]
+        [DataRow("Double CR will result in line break. \r\n\r\nStarting on a new line.", "Double CR will result in line break. \n<br />\nStarting on a new line.")]
+        [DataRow("Any simple text.## Header2\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.<h1> Header2</h1>\nStarting on a new line.")]
+        public void CreateHtmlDocument(string value, string expectedContent)
+        {
+            var md = new MarkDownReader();
+            IMarkdownContent contentBlocks = md.Parse(value);
+            string result;
+            using(var ms = new MemoryStream())
+            {
+                var sw = new StreamWriter(ms);
+                md.WriteHtmlContent(sw, contentBlocks);
+                sw.Flush();
+
+                result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            }
+
+            Assert.AreEqual(expectedContent, result);
+        }
+    }
+
     [TestClass]
     public class MarkDownReaderTests
     {
         [DataTestMethod]
         [DataRow("Any simple text.", 0, MdType.Document, "Any simple text.")]
-        [DataRow("Any simple text.\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\rStarting on a new line.")]
-        [DataRow("Any simple text.## Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.## Header2\n\rStarting on a new line.")]
-        [DataRow("Any simple text.\n\r## Valid Header2\n\rStarting on a new line.", 1, MdType.Header, "Any simple text.\n\r{0}\n\rStarting on a new line.")]
-        [DataRow("Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.", 0, MdType.Document, "Any simple text.\n\r##Invalid Header2\n\rStarting on a new line.")]
+        [DataRow("Any simple text.\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.\r\nStarting on a new line.")]
+        [DataRow("Any simple text.## Header2\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.## Header2\r\nStarting on a new line.")]
+        [DataRow("Any simple text.\r\n## Valid Header2\r\nStarting on a new line.", 1, MdType.Header, "Any simple text.\r\n{0}\r\nStarting on a new line.")]
+        [DataRow("Any simple text.\r\n##Invalid Header2\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.\r\n##Invalid Header2\r\nStarting on a new line.")]
+        [DataRow("Ignore placeholders in content {{0}}.", 0, MdType.Document, "Ignore placeholders in content {{0}}.")]
         [DataRow("## Valid Header2", 1, MdType.Header, "{0}")]
-        [DataRow("List items\n\r- First\n\r- Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        [DataRow("List items\n\r* First\n\r* Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        [DataRow("List items\n\r+ First\n\r+ Second", 2, MdType.ListItem, "List items\n\r{0}\n\r{1}")]
-        [DataRow("List items\n\r  - First\n\r  - Second", 2, MdType.ListItem, "List items\n\r  {0}\n\r  {1}")]
-        [DataRow("Numbered items\n\r  1. First\n\r  2. Second", 2, MdType.NumberedItem, "Numbered items\n\r  {0}\n\r  {1}")]
+        [DataRow("List items\r\n- First\r\n- Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
+        [DataRow("List items\r\n* First\r\n* Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
+        [DataRow("List items\r\n+ First\r\n+ Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
+        [DataRow("List items\r\n  - First\r\n  - Second", 2, MdType.ListItem, "List items\r\n  {0}\r\n  {1}")]
+        [DataRow("Numbered items\r\n  1. First\r\n  2. Second", 2, MdType.NumberedItem, "Numbered items\r\n  {0}\r\n  {1}")]
         [DataRow("[ ] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
         [DataRow("[x]  Checkbox", 1, MdType.CheckBox, "{0}  Checkbox")]
         [DataRow("[v] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
         [DataRow("> BlockQuote", 1, MdType.BlockQuote, "{0}")]
-        [DataRow("> BlockQuote\n\rNext line", 1, MdType.BlockQuote, "{0}\n\rNext line")]
-        [DataRow(" > BlockQuote\n\rNext line", 1, MdType.BlockQuote, " {0}\n\rNext line")]
+        [DataRow("> BlockQuote\r\nNext line", 1, MdType.BlockQuote, "{0}\r\nNext line")]
+        [DataRow(" > BlockQuote\r\nNext line", 1, MdType.BlockQuote, " {0}\r\nNext line")]
         [DataRow("---", 1, MdType.HorizontalRule, "{0}")]
-        [DataRow("___\n\rNext line", 1, MdType.HorizontalRule, "{0}\n\rNext line")]
-        [DataRow(" ***\n\rNext line", 1, MdType.HorizontalRule, " {0}\n\rNext line")]
-        [DataRow("Some text\n\r---\n\rNext line", 1, MdType.HorizontalRule, "Some text\n\r{0}\n\rNext line")]
-        [DataRow("```\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
-        [DataRow("````\n\rCode block\n\r````\n\r", 1, MdType.Code, "{0}\n\r")]
-        [DataRow("```C#\n\rCode block\n\r```\n\r", 1, MdType.Code, "{0}\n\r")]
-        [DataRow("~~~~\n\rPreformatted \n\rcode\n\r block\n\r~~~~\n\r", 1, MdType.Code, "{0}\n\r")]
+        [DataRow("___\r\nNext line", 1, MdType.HorizontalRule, "{0}\r\nNext line")]
+        [DataRow(" ***\r\nNext line", 1, MdType.HorizontalRule, " {0}\r\nNext line")]
+        [DataRow("Some text\r\n---\r\nNext line", 1, MdType.HorizontalRule, "Some text\r\n{0}\r\nNext line")]
+        [DataRow("```\r\nCode block\r\n```\r\n", 1, MdType.Code, "{0}\r\n")]
+        [DataRow("````\r\nCode block\r\n````\r\n", 1, MdType.Code, "{0}\r\n")]
+        [DataRow("```C#\r\nCode block\r\n```\r\n", 1, MdType.Code, "{0}\r\n")]
+        [DataRow("~~~~\r\nPreformatted \r\ncode\r\n block\r\n~~~~\r\n", 1, MdType.Code, "{0}\r\n")]
         [DataRow("Some text (Nice2experience) with label", 1, MdType.Label, "Some text {0} with label")]
         [DataRow("Some text (Nice2experience)[http://www/nice2experience.com] with label and anchor", 2, MdType.Label, "Some text {0}{1} with label and anchor")]
         [DataRow("Some text [http://www/nice2experience.com] with anchor", 1, MdType.Anchor, "Some text {0} with anchor")]
@@ -65,8 +96,8 @@ namespace C2sc.MarkDown
         [DataTestMethod]
         [DataRow("Some text `Inline code block` with inline code ignores other elements??")]
         [DataRow("Some text `Inline _code_ block` with inline code ignores other elements??")]
-        [DataRow("```C#\n\rCode _ignore inner code_ block\n\r```\n\r")]
-        [DataRow("~~~~\n\rPreformatted \n\r# Header\n\r code block\n\r~~~~\n\r")]
+        [DataRow("```C#\r\nCode _ignore inner code_ block\r\n```\r\n")]
+        [DataRow("~~~~\r\nPreformatted \r\n# Header\r\n code block\r\n~~~~\r\n")]
         public void ParseElementsThatIgnoreInnerMarkdown(string value)
         {
             var md = new MarkDownReader();
@@ -79,9 +110,9 @@ namespace C2sc.MarkDown
         }
 
         [DataTestMethod]
-        [DataRow("| Table | Table | Column3 |\n\r| :--- | :---: | ---: \n\r| col1 | col2 |\n\r")]
-        [DataRow("| Table | Table | Column3\n\r| --- | :---: | ---: \n\r| col1 | col2 | col3 \n\r")]
-        [DataRow("| Table | Table\n\r| --- | :---: | ---: \n\r| col1 | col2 \n\r")]
+        [DataRow("| Table | Table | Column3 |\r\n| :--- | :---: | ---: \r\n| col1 | col2 |\r\n")]
+        [DataRow("| Table | Table | Column3\r\n| --- | :---: | ---: \r\n| col1 | col2 | col3 \r\n")]
+        [DataRow("| Table | Table\r\n| --- | :---: | ---: \r\n| col1 | col2 \r\n")]
         public void ParseTables(string value)
         {
             var md = new MarkDownReader();
@@ -92,7 +123,7 @@ namespace C2sc.MarkDown
             // three rows
             Assert.IsNotNull(contentBlocks);
             Assert.AreEqual(3, contentBlocks.SubElements.Count);
-            Assert.AreEqual("{0}\n\r{1}\n\r{2}\n\r", contentBlocks.Content);
+            Assert.AreEqual("{0}\r\n{1}\r\n{2}\r\n", contentBlocks.Content);
 
             var firstRow = contentBlocks.SubElements[0];
             Assert.IsNotNull(firstRow);
@@ -113,9 +144,9 @@ namespace C2sc.MarkDown
         }
 
         [DataTestMethod]
-        [DataRow("List items\n\r- First\n\r- Second", new int[] { 0, 0 })]
-        [DataRow("List items\n\r  - First\n\r  - Second", new int[] { 2, 2 })]
-        [DataRow("List items\n\r- First\n\r  - Second", new int[] { 0, 2 })]
+        [DataRow("List items\r\n- First\r\n- Second", new int[] { 0, 0 })]
+        [DataRow("List items\r\n  - First\r\n  - Second", new int[] { 2, 2 })]
+        [DataRow("List items\r\n- First\r\n  - Second", new int[] { 0, 2 })]
         public void ParseListItemWithDepthCount(string value, int[] expectValue)
         {
             var md = new MarkDownReader();
