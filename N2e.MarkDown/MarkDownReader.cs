@@ -80,7 +80,7 @@ namespace N2e.MarkDown
                             if (index < subItems.Count)
                             {
                                 var subItem = subItems[index];
-                                WriteHtml(stream, subItem.Type, subItem.Content, subItem.CountTrigger, subItem.SubElements);
+                                WriteHtml(stream, subItem.Type, subItem.Content, subItem.CountTrigger, subItem.Selected, subItem.SubElements);
                             }
                         }
                         i = p + 1;
