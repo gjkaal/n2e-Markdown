@@ -1,5 +1,6 @@
 ﻿using N2e.MarkDown.Abstractions;
 using N2e.MarkDown.Core;
+using N2e.MarkDown.Extensions;
 using N2e.MarkDown.Syntax;
 using System.Collections.Generic;
 using System.IO;
@@ -52,16 +53,16 @@ namespace N2e.MarkDown
         {
             if (stream == null || content == null) return;
 
-            WriteHtml(stream, content.Type, content.Content, content.SubElements);
+            WriteHtml(stream, content.Type, content.Content, content.CountTrigger, content.Selected, content.SubElements);
         }
 
-        private void WriteHtml(TextWriter stream, MdType contentType, string content, IList<IMarkdownContent> subItems)
+        private void WriteHtml(TextWriter stream, MdType contentType, string content, int count, bool selected, IList<IMarkdownContent> subItems)
         {
             if (content.Length == 0) return;
             var i = 0;
             var nCount = 0;
 
-            stream.RenderHtmlPrefix(contentType);
+            stream.RenderHtmlPrefix(contentType, count, selected);
 
             while (i < content.Length)
             {
@@ -79,10 +80,11 @@ namespace N2e.MarkDown
                             if (index < subItems.Count)
                             {
                                 var subItem = subItems[index];
-                                WriteHtml(stream, subItem.Type, subItem.Content, subItem.SubElements);
+                                WriteHtml(stream, subItem.Type, subItem.Content, subItem.CountTrigger, subItem.SubElements);
                             }
                         }
                         i = p + 1;
+                        nCount = 0;
                     }
                 }
                 else
@@ -110,7 +112,7 @@ namespace N2e.MarkDown
                 i++;
             }
 
-            stream.RenderHtmlPostFix(contentType);
+            stream.RenderHtmlPostfix(contentType, count);
         }
 
         private static bool ValidatePlaceholder(TextWriter stream, string content, ref int i)

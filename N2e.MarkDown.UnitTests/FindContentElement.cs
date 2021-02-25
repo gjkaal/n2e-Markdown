@@ -16,7 +16,8 @@ namespace C2sc.MarkDown
         [DataRow("} Any simple text with edge case.", "} Any simple text with edge case.")]
         [DataRow("Any simple text.\r\nStarting on a new line.", "Any simple text.\nStarting on a new line.")]
         [DataRow("Double CR will result in line break. \r\n\r\nStarting on a new line.", "Double CR will result in line break. \n<br />\nStarting on a new line.")]
-        [DataRow("Any simple text.## Header2\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.<h1> Header2</h1>\nStarting on a new line.")]
+        [DataRow("Any simple text.\r\n# Header1\r\nStarting on a new line.", "Any simple text.\n<h1> Header1</h1>\nStarting on a new line.")]
+        [DataRow("Any simple text.\r\n## Header2\r\nStarting on a new line.", "Any simple text.\n<h2> Header2</h2>\nStarting on a new line.")]
         public void CreateHtmlDocument(string value, string expectedContent)
         {
             var md = new MarkDownReader();
