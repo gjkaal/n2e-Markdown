@@ -3,6 +3,7 @@ using System;
 using N2e.MarkDown.Abstractions;
 using N2e.MarkDown;
 using System.IO;
+using System.Linq;
 
 namespace C2sc.MarkDown
 {
@@ -47,11 +48,12 @@ namespace C2sc.MarkDown
         [DataRow("Any simple text.\r\n##Invalid Header2\r\nStarting on a new line.", 0, MdType.Document, "Any simple text.\r\n##Invalid Header2\r\nStarting on a new line.")]
         [DataRow("Ignore placeholders in content {{0}}.", 0, MdType.Document, "Ignore placeholders in content {{0}}.")]
         [DataRow("## Valid Header2", 1, MdType.Header, "{0}")]
-        [DataRow("List items\r\n- First\r\n- Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
-        [DataRow("List items\r\n* First\r\n* Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
-        [DataRow("List items\r\n+ First\r\n+ Second", 2, MdType.ListItem, "List items\r\n{0}\r\n{1}")]
-        [DataRow("List items\r\n  - First\r\n  - Second", 2, MdType.ListItem, "List items\r\n  {0}\r\n  {1}")]
-        [DataRow("Numbered items\r\n  1. First\r\n  2. Second", 2, MdType.NumberedItem, "Numbered items\r\n  {0}\r\n  {1}")]
+        [DataRow("List items\r\n- First\r\n- Second", 1, MdType.List, "List items\r\n{0}\r\n")]
+        [DataRow("List items\r\n* First\r\n* Second", 1, MdType.List, "List items\r\n{0}\r\n")]
+        [DataRow("List items\r\n+ First\r\n+ Second", 1, MdType.List, "List items\r\n{0}\r\n")]
+        [DataRow("List items\r\n  - First\r\n  - Second", 1, MdType.List, "List items\r\n  {0}  \r\n")]
+        [DataRow("Numbered items\r\n  1. First\r\n  2. Second", 1, MdType.OrderedList, "Numbered items\r\n  {0}  \r\n")]
+        [DataRow("Numbered items\r\n  1. First\r\n  2. Second\r\n# Header1\r\n", 2, MdType.OrderedList, "Numbered items\r\n  {0}\r\n  {2}\r\n")]
         [DataRow("[ ] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
         [DataRow("[x]  Checkbox", 1, MdType.CheckBox, "{0}  Checkbox")]
         [DataRow("[v] Checkbox", 1, MdType.CheckBox, "{0} Checkbox")]
@@ -83,8 +85,8 @@ namespace C2sc.MarkDown
             Assert.IsNotNull(contentBlocks);
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(contentBlocks, Newtonsoft.Json.Formatting.Indented));
 
-            Assert.AreEqual(expectedElementCount, contentBlocks.SubElements.Count);
-            Assert.AreEqual(expectedContent, contentBlocks.Content);
+            Assert.AreEqual(expectedElementCount, contentBlocks.SubElements.Count(m => m!=null));
+            Assert.AreEqual(expectedContent.Replace(" ", string.Empty), contentBlocks.Content.Replace(" ", string.Empty));
             if (expectedElementCount > 0)
             {
                 var item = contentBlocks.SubElements[0];
@@ -117,13 +119,19 @@ namespace C2sc.MarkDown
         public void ParseTables(string value)
         {
             var md = new MarkDownReader();
-            IMarkdownContent contentBlocks = md.Parse(value);
+            IMarkdownContent tableContents = md.Parse(value);
 
-            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(contentBlocks, Newtonsoft.Json.Formatting.Indented));
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(tableContents, Newtonsoft.Json.Formatting.Indented));
 
-            // three rows
+            // one table
+            Assert.IsNotNull(tableContents);
+            Assert.AreEqual(1, tableContents.SubElements.Count);
+            Assert.AreEqual("{0}\r\n", tableContents.Content);
+
+            // two rows
+            var contentBlocks = tableContents.SubElements[1];
             Assert.IsNotNull(contentBlocks);
-            Assert.AreEqual(3, contentBlocks.SubElements.Count);
+            Assert.AreEqual(2, contentBlocks.SubElements.Count);
             Assert.AreEqual("{0}\r\n{1}\r\n{2}\r\n", contentBlocks.Content);
 
             var firstRow = contentBlocks.SubElements[0];
@@ -131,12 +139,12 @@ namespace C2sc.MarkDown
             Assert.AreEqual(MdType.TableRow, firstRow.Type);
 
             Assert.IsTrue(firstRow.SubElements.Count>=2);
-            Assert.AreEqual(MdType.TableCell, firstRow.SubElements[0].Type);
+            Assert.AreEqual(MdType.TableHeader, firstRow.SubElements[0].Type);
             Assert.AreEqual("Table", firstRow.SubElements[0].Content);
 
             var secondRow = contentBlocks.SubElements[1];
             Assert.IsNotNull(secondRow);
-            Assert.AreEqual(MdType.SplitRow, secondRow.Type);
+            Assert.AreEqual(MdType.TableRow, secondRow.Type);
 
             Assert.AreEqual(3, secondRow.SubElements.Count);
             Assert.AreEqual(MdType.TableCell, secondRow.SubElements[0].Type);
@@ -151,7 +159,11 @@ namespace C2sc.MarkDown
         public void ParseListItemWithDepthCount(string value, int[] expectValue)
         {
             var md = new MarkDownReader();
-            IMarkdownContent contentBlocks = md.Parse(value);
+            IMarkdownContent listContent = md.Parse(value);
+
+            var contentBlocks = listContent.SubElements[0];
+            Assert.AreEqual(MdType.List, contentBlocks.Type);
+
             Assert.AreEqual(MdType.ListItem, contentBlocks.SubElements[0].Type);
             Assert.AreEqual(expectValue[0], contentBlocks.SubElements[0].Depth);
             Assert.AreEqual("First", contentBlocks.SubElements[0].Content.Trim());

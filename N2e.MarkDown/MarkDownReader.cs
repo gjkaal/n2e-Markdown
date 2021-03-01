@@ -36,7 +36,7 @@ namespace N2e.MarkDown
 
         public IMarkdownContent Parse(string value)
         {
-            var result = new MarkdownContent
+            IMarkdownContent result = new MarkdownContent
             {
                 Type = MdType.Document,
                 Content = value,
@@ -46,8 +46,60 @@ namespace N2e.MarkDown
 
             // get outer element
             ParseResult(result);
+
+            // Post processing
+            // find embedded elements:
+            // Table, List, OrderedList
+            result = PostProcess(result, 0);
+
             return result;
         }
+
+        private IMarkdownContent PostProcess(IMarkdownContent content, int x)
+        {
+            if (content == null) return null;
+            if (x >= content.SubElements.Count) return content;
+            var item = content.SubElements[x];
+            if (item == null) return PostProcess(content, x + 1);
+
+            if (item.Type == MdType.ListItem || item.Type == MdType.NumberedItem)
+            {
+                var n = 0;
+                var sb = new StringBuilder();
+                var collectList = new MarkdownContent
+                {
+                    Type = item.Type == MdType.ListItem ? MdType.List : MdType.OrderedList,
+                    Index = x,
+                };
+                while (x + n < content.SubElements.Count && 
+                    (content.SubElements[x + n].Type == MdType.ListItem
+                    || content.SubElements[x + n].Type == MdType.NumberedItem
+                    )) n++;
+                for(var i = 0; i < n; i++)
+                {
+                    sb.Append($"{{{i}}}");
+                    var subItem = content.SubElements[x+i];
+                    subItem.UpdateIndex(i);
+                    collectList.SubElements.Add(subItem);
+                    content.SubElements[x + i] = null;
+                    
+                    if (i > 0)
+                    {
+                        var newContent = content.Content;
+                        var placeHolder = $"{{{x + i}}}";
+                        newContent = newContent.Replace(placeHolder + "\r\n", string.Empty);
+                        newContent = newContent.Replace(placeHolder + "\n", string.Empty);
+                        newContent = newContent.Replace(placeHolder, string.Empty);
+                        content.UpdateContent(newContent);
+                    }
+                }
+                collectList.Content = sb.ToString();
+                content.SubElements[x] = collectList;                
+                
+            }
+            return PostProcess(content, x + 1);
+        }
+       
 
         public void WriteHtmlContent(TextWriter stream, IMarkdownContent content)
         {
@@ -67,6 +119,8 @@ namespace N2e.MarkDown
             while (i < content.Length)
             {
                 var c = content[i];
+                // ignore empty entries
+                if (c == null) continue;
                 // ignore linefeed characters
                 if (c == '\r') { i++;  continue; }
                 if (c == '{' )
