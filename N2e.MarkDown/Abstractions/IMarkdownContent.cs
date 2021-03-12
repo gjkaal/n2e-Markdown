@@ -16,5 +16,6 @@ namespace N2e.MarkDown.Abstractions
         void UpdateDepth(int depth);
         void UpdateIndex(int intValue);
         void UpdateContent(string v);
+        void UpdateType(MdType type);
     }
 }

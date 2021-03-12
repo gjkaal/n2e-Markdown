@@ -29,5 +29,10 @@ namespace N2e.MarkDown.Core
         {
             Index = value;
         }
+
+        public void UpdateType(MdType type)
+        {
+            Type = type;
+        }
     }
 }

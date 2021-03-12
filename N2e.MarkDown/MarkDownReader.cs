@@ -65,6 +65,7 @@ namespace N2e.MarkDown
 
             if (item.Type == MdType.ListItem || item.Type == MdType.NumberedItem)
             {
+                // collect items to form a list
                 var n = 0;
                 var sb = new StringBuilder();
                 var collectList = new MarkdownContent
@@ -72,33 +73,80 @@ namespace N2e.MarkDown
                     Type = item.Type == MdType.ListItem ? MdType.List : MdType.OrderedList,
                     Index = x,
                 };
+                // find end of list items
                 while (x + n < content.SubElements.Count && 
                     (content.SubElements[x + n].Type == MdType.ListItem
                     || content.SubElements[x + n].Type == MdType.NumberedItem
                     )) n++;
+                // move elements into list
                 for(var i = 0; i < n; i++)
                 {
+                    var subItem = content.SubElements[x + i];
                     sb.Append($"{{{i}}}");
-                    var subItem = content.SubElements[x+i];
                     subItem.UpdateIndex(i);
                     collectList.SubElements.Add(subItem);
                     content.SubElements[x + i] = null;
-                    
                     if (i > 0)
                     {
-                        var newContent = content.Content;
-                        var placeHolder = $"{{{x + i}}}";
-                        newContent = newContent.Replace(placeHolder + "\r\n", string.Empty);
-                        newContent = newContent.Replace(placeHolder + "\n", string.Empty);
-                        newContent = newContent.Replace(placeHolder, string.Empty);
-                        content.UpdateContent(newContent);
+                        content.UpdateContent(Sanitize(content.Content, $"{{{x + i}}}"));
                     }
                 }
                 collectList.Content = sb.ToString();
-                content.SubElements[x] = collectList;                
-                
+                content.SubElements[x] = collectList;                                
+            }
+            else if (item.Type == MdType.TableRow || item.Type == MdType.SplitRow )
+            {
+                // collect items to form a table
+                var n = 0;
+                var sb = new StringBuilder();
+                var collectTable = new MarkdownContent
+                {
+                    Type = MdType.Table,
+                    Index = x,
+                    Content = "{{0}}\n"
+                };
+                // find end of table items
+                while (x + n < content.SubElements.Count &&
+                    (content.SubElements[x + n].Type == MdType.TableRow
+                    || content.SubElements[x + n].Type == MdType.SplitRow
+                    )) n++;
+                // move elements into table
+                var rowType = MdType.TableHeader;
+                for (var i = 0; i < n; i++)
+                {
+                    var subItem = content.SubElements[x + i];
+                    if (subItem.Type == MdType.SplitRow)
+                    {
+                        // TODO: Use this to set alignments
+                        // a splitrow is not added to the result
+                        // next rows are tablerows
+                        rowType = MdType.TableRow;
+                    }
+                    else
+                    {
+                        subItem.UpdateType( rowType);
+                        subItem.UpdateIndex(i);
+                        collectTable.SubElements.Add(subItem);
+                    }
+                    content.SubElements[x + i] = null;
+
+                    if (i > 0)
+                    {
+                        content.UpdateContent(Sanitize(content.Content, $"{{{x + i}}}"));
+                    }
+                }
+                collectTable.Content = sb.ToString();
+                content.SubElements[x] = collectTable;
             }
             return PostProcess(content, x + 1);
+        }
+
+        private static string Sanitize(string newContent, string placeHolder)
+        {
+            newContent = newContent.Replace(placeHolder + "\r\n", string.Empty);
+            newContent = newContent.Replace(placeHolder + "\n", string.Empty);
+            newContent = newContent.Replace(placeHolder, string.Empty);
+            return newContent;
         }
 
         public bool ParseStream(StreamReader file, FileStream html, Action<string> logger, bool verbose)
