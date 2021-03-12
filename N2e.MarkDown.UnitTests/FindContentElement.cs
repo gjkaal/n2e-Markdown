@@ -37,6 +37,7 @@ namespace C2sc.MarkDown
         }
 
         [TestMethod]
+        [Ignore("For local verification only")]
         public void CreateHTMLDocument()
         {
             var file = File.OpenText("C:\\_github\\n2e-Markdown\\DeveloperNotes.md");
