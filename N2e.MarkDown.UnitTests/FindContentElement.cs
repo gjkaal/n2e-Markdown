@@ -35,6 +35,16 @@ namespace C2sc.MarkDown
 
             Assert.AreEqual(expectedContent, result);
         }
+
+        [TestMethod]
+        public void CreateHTMLDocument()
+        {
+            var file = File.OpenText("C:\\_github\\n2e-Markdown\\DeveloperNotes.md");
+            var html = File.OpenWrite("C:\\_github\\n2e-Markdown\\DeveloperNotes.html");
+            var md = new MarkDownReader();
+            var result = md.ParseStream(file, html, (s) => Console.WriteLine(s), true);
+            Assert.IsTrue(result);
+        }
     }
 
     [TestClass]

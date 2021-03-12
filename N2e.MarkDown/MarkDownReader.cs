@@ -2,6 +2,7 @@
 using N2e.MarkDown.Core;
 using N2e.MarkDown.Extensions;
 using N2e.MarkDown.Syntax;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -99,7 +100,68 @@ namespace N2e.MarkDown
             }
             return PostProcess(content, x + 1);
         }
-       
+
+        public bool ParseStream(StreamReader file, FileStream html, Action<string> logger, bool verbose)
+        {
+            logger("Start parsing");
+            var lineCount = 0;
+            var result = true;
+            try
+            {
+                var sw = new StreamWriter(html);
+                var sb = new StringBuilder();
+                
+                while (!file.EndOfStream)
+                {                    
+                    var line = file.ReadLine();
+                    lineCount++;
+                    if (string.IsNullOrWhiteSpace(line))
+                    {
+                        logger($"Parsing block above {lineCount}");
+                        ParsePartial(sb.ToString(),  lineCount, sw, logger, verbose);
+                        sb.Clear();
+                    }
+                    else
+                    {
+                        sb.AppendLine(line);
+                    }
+                }
+                logger($"Parsing last block at {lineCount}");
+                ParsePartial(sb.ToString(), lineCount, sw, logger, verbose);
+                sw.Flush();
+            } 
+            catch(Exception e)
+            {
+                logger($"Fatal exception occured at line {lineCount}");
+                logger(e.ToString());
+                result = false;
+            }
+            logger($"Parsing {(result?"success":"incomplete")}");
+            
+            return result;
+        }
+
+        private void ParsePartial( string content, int lineCount,StreamWriter sw, Action<string> logger, bool verbose )
+        {
+            if (string.IsNullOrEmpty(content))
+            {
+                return;
+            }
+            try
+            {
+                var md = Parse(content);
+                WriteHtmlContent(sw, md);
+                sw.WriteLine("<br />");
+            }
+            catch (Exception e)
+            {
+                logger($"Exception occured at line {lineCount} : {e.Message}");
+                if (verbose)
+                {
+                    logger(e.ToString());
+                }
+            }
+        }
 
         public void WriteHtmlContent(TextWriter stream, IMarkdownContent content)
         {
@@ -110,7 +172,7 @@ namespace N2e.MarkDown
 
         private void WriteHtml(TextWriter stream, MdType contentType, string content, int count, bool selected, IList<IMarkdownContent> subItems)
         {
-            if (content.Length == 0) return;
+            if (content == null || content.Length == 0) return;
             var i = 0;
             var nCount = 0;
 
